@@ -13,6 +13,6 @@ source myenv/bin/activate
 pip install -r requirements.txt
 5- Run the migrations
 python manage.py migrate
-6- Create .env and fill in the information. (keys that are in the .env.exemple)
+6- Create .env and fill in the information. (keys that are in the .env.exemple).
 7- Start the server
 python manage.py runserver
