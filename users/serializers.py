@@ -21,6 +21,18 @@ class UserSerializer(serializers.ModelSerializer):
 
         return User.objects.create_superuser(**validated_data)
     
+    def update(self, instance: User, validated_data: dict) -> User:
+        pass_word = validated_data.pop("password", None)
+
+        instance.set_password(pass_word)
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+
+        return instance
+
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all())],
     )
