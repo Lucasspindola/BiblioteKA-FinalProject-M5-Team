@@ -15,12 +15,11 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data: dict) -> User:
-
         if not validated_data["is_employee"]:
             return User.objects.create_user(**validated_data)
 
         return User.objects.create_superuser(**validated_data)
-    
+
     def update(self, instance: User, validated_data: dict) -> User:
         pass_word = validated_data.pop("password", None)
 
@@ -42,7 +41,3 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "password", "is_employee"]
         extra_kwargs = {"password": {"write_only": True}}
-    
-
-    
-    
