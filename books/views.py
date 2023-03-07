@@ -1,13 +1,18 @@
 from django.shortcuts import render
 from .models import Book, Follow
 from .serializers import BookSerializer, FollowSerializer
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    CreateAPIView,
+)
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import CustomBookPermission
 from .pagination import CustomBookPagination
 from django_filters import rest_framework as filters
 from rest_framework.views import Response
 from rest_framework.permissions import IsAuthenticated
+from .mixins import CustomFollowMixin
 
 
 class BookFilter(filters.FilterSet):
@@ -35,26 +40,9 @@ class BookDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = BookSerializer
 
 
-class FollowView(ListCreateAPIView):
+class FollowView(CustomFollowMixin, CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
-
-    def post(self, request, *args, **kwargs):
-
-        book = Book.objects.get(id=self.kwargs.get("pk"))
-        try:
-            followers = Follow.objects.get(book=book, user=request.user)
-            if followers:
-                return Response({"message": "Usuario já segue esse livro"}, 409)
-        except Follow.DoesNotExist:
-            pass
-
-        return self.create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-
-        serializer.save(user_id=self.request.user.id,
-                        book_id=self.kwargs.get("pk"))
