@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 # Create your models here.
 
@@ -11,10 +12,10 @@ class Copie(models.Model):
     book = models.ForeignKey(
         "books.Book", related_name="copies", on_delete=models.CASCADE
     )
-    is_available = models.BooleanField(default=True)
     users = models.ManyToManyField(
         "users.User", through="copies.CopieLoan", related_name="loans"
     )
+    is_available = models.BooleanField(default=True)
 
 
 class CopieLoan(models.Model):
@@ -23,3 +24,5 @@ class CopieLoan(models.Model):
 
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     copie = models.ForeignKey("copies.Copie", on_delete=models.CASCADE)
+    loan_date = models.DateTimeField(default=datetime.datetime.now())
+    return_date = models.DateTimeField(null=True, blank=True)
