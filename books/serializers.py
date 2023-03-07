@@ -29,12 +29,11 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Follow
         fields = [
             "user",
-            "book",
         ]
         depth = 1
