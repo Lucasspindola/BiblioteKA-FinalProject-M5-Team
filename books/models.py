@@ -2,19 +2,25 @@ from django.db import models
 
 
 class Book(models.Model):
+    class Meta:
+        ordering = ("title",)
 
-    title = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
+    title = models.CharField(
+        max_length=255,
+        unique=True,
+        error_messages={
+            "unique": ("A book with that title already exists."),
+        },
+    )
+    description = models.CharField(max_length=255, blank=True, null=True)
     author = models.CharField(max_length=255)
-
-    follower = models.ManyToManyField(
-        "users.User", through="Follow", related_name="books")
+    is_avaliable = models.BooleanField(default=True)
+    followers = models.ManyToManyField(
+        "users.User", through="Follow", related_name="following_books"
+    )
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(
-        "users.User", on_delete=models.CASCADE, related_name="user_book_follow")
-    book = models.ForeignKey(
-        Book, on_delete=models.CASCADE, related_name="book_follow")
-    borrowed_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
     # price = models.DecimalField(max_digits=8, decimal_places=2)
