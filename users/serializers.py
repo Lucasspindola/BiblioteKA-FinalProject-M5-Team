@@ -1,3 +1,4 @@
+from books.models import Book
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import User
@@ -11,6 +12,12 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
         token["is_employee"] = user.is_employee
 
         return token
+
+
+class FollowBooksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        exclude = ["followers"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,7 +44,11 @@ class UserSerializer(serializers.ModelSerializer):
     )
     is_employee = serializers.BooleanField(allow_null=True, default=False)
 
+    following_books = FollowBooksSerializer(read_only=True, many=True)
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "is_employee"]
+        fields = ["id", "username", "email", "password",
+                  "is_employee", "following_books"]
         extra_kwargs = {"password": {"write_only": True}}
+        depth = 1
