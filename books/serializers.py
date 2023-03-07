@@ -2,16 +2,11 @@ from rest_framework import serializers
 from .models import Book, Follow
 from rest_framework import serializers
 from users.serializers import UserSerializer
-
-# from copies.models import Copies
-
-"""
-Necessário finalizar a model Copie para atualizar o método create.
-"""
+from copies.models import Copie
 
 
 class BookSerializer(serializers.ModelSerializer):
-    copies_qnt = serializers.IntegerField(min_value=0, write_only=True)
+    copies_qnt = serializers.IntegerField(min_value=1, write_only=True)
 
     class Meta:
         model = Book
@@ -27,9 +22,8 @@ class BookSerializer(serializers.ModelSerializer):
     def create(self, validated_data: dict):
         copies_qnt = validated_data.pop("copies_qnt")
         book = Book.objects.create(**validated_data)
-        # copies_objects = [Copies(book) for _ in range(copies_qnt)]
-
-        # Copies.objects.bulk_create(copies_objects)
+        copies_objects = [Copie(book=book) for _ in range(copies_qnt)]
+        Copie.objects.bulk_create(copies_objects)
 
         return book
 
