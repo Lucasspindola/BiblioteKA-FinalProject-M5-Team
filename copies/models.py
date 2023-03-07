@@ -9,5 +9,5 @@ class CopieLoan(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     copie = models.ForeignKey("copies.Copie", on_delete=models.CASCADE)
     loan_date = models.DateTimeField(default=datetime.datetime.now())
-    return_date = models.DateTimeField(null=True, blank=True)
-    expected_return_date = models.DateTimeField()
+    delivery_date = models.DateTimeField(null=True, blank=True)
+    expected_return = models.DateTimeField()
