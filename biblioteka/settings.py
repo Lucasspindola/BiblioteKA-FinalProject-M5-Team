@@ -46,6 +46,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
+    "drf_spectacular",
 ]
 
 MY_APPS = [
@@ -131,9 +132,18 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BiblioteKA',
+    'DESCRIPTION': 'API for users to borrow books from a library.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
