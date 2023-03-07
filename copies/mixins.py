@@ -17,6 +17,7 @@ class CreateCopieMixin:
         book_serializer = BookSerializer(book_obj)
         data = {
             "book": book_serializer.data,
+            "copies_created": copies_qnt,
             "copies_total": Copie.objects.filter(book=book_obj).count(),
         }
 
