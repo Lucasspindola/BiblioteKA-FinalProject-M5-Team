@@ -1,17 +1,16 @@
 from django.shortcuts import render
-from rest_framework.views import APIView, status, Response
-from serializers import CopieLoanSerializer
+from serializers import LoanSerializer
+from rest_framework.generics import CreateAPIView
+from .models import Loan
+
+
 # Create your views here.
-class LoansView(APIView):
+class LoansView(CreateAPIView):
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def post(self, request):
-        """
-        Emprestimo
-        """
-        serializer = CopieLoanSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
+    serializer_class = LoanSerializer
+    queryset = Loan.objects.all()
 
-        return Response(serializer.data, status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

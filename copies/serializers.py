@@ -1,17 +1,16 @@
 from rest_framework import serializers
-
-from .models import CopieLoan
+from .models import Loan
 from users.models import User
-from models import Copie
 from django.shortcuts import get_object_or_404
-from datetime import timedelta, date
-import datetime
+from datetime import timedelta, date, datetime
 
 
-class CopieLoanSerializer(serializers.ModelSerializer):
+class LoanSerializer(serializers.ModelSerializer):
+    expected_return_date = serializers.SerializerMethodField()
+
     def create(self, validated_data: dict):
         copie_id = validated_data.get("copie_id")
-        copie = get_object_or_404(Copie, id=copie_id)
+        copie = get_object_or_404(Loan, id=copie_id)
         user_id = validated_data["user_id"]
         user = get_object_or_404(User, id=user_id)
         current_day = datetime.now()
@@ -24,7 +23,7 @@ class CopieLoanSerializer(serializers.ModelSerializer):
             expected_return = expected_return + timedelta(
                 days=(7 - expected_return.weekday())
             )
-        
+
         # Todos os livros emprestados deverão ter uma data de retorno
 
         # Caso o estudante não devolva o livro até o prazo estipulado,
@@ -35,13 +34,26 @@ class CopieLoanSerializer(serializers.ModelSerializer):
         # Após completar as devoluções pendentes, o bloqueio deve permanecer por alguns dias.
         return ""
 
+    def get_expected_return_date(self, obj):
+        date_now = date.today()
+
+        after_3_days = date_now + timedelta(days=3)
+        return_date = after_3_days
+
+        if after_3_days.weekday() == 5:
+            return_date += timedelta(days=2)
+        if after_3_days.weekday() == 6:
+            return_date += timedelta(days=1)
+
+        return return_date
+
     class Meta:
-        model = CopieLoan
+        model: Loan
         fields = [
-            "id",
+            "user",
+            "copie",
             "loan_date",
+            "expected_return_date",
             "delivery_date",
-            "expected_return",
-            "user_id",
-            "copie_id",
         ]
+        read_only_fields = ["loan_date", "delivery_date"]
