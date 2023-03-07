@@ -16,9 +16,9 @@ class Copie(models.Model):
     book = models.ForeignKey(
         "books.Book", related_name="copies", on_delete=models.CASCADE
     )
-    users = models.ManyToManyField(
+    loan_users = models.ManyToManyField(
         "users.User",
-        through="copies.<nome_da_tabela_de_emprestimos>",
+        through="copies.<nome_da_model_de_emprestimos>",
         related_name="loans",
     )
     is_available = models.BooleanField(default=True)
