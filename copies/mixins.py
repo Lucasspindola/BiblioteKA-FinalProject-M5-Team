@@ -22,3 +22,8 @@ class CreateCopieMixin:
         }
 
         return Response(data, status=status.HTTP_201_CREATED)
+
+
+class LoanMixin:
+    def create(self, request: Request, *args, **kwargs):
+        return
