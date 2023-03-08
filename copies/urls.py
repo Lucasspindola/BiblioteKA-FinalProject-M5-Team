@@ -7,4 +7,5 @@ urlpatterns = [
     path("loans/", LoansView.as_view()),
     path("books/loans/<int:pk>/", LoansView.as_view()),
     path("books/loans/devolution/<int:pk>/", LoansView.as_view()),
+    path("books/loans/<int:pk>/", LoansView.as_view()),
 ]
