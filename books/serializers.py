@@ -35,5 +35,7 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
         fields = [
             "user",
+            "will_be_avaliable_date"
         ]
+        extra_kwargs = {"will_be_avaliable_date": {"read_only=True"}}
         depth = 1
