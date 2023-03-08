@@ -26,16 +26,6 @@ class LoanSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         email = validated_data.pop("email")
-
-    def create(self, validated_data: dict):
-        copie_id = validated_data.get("copie_id")
-        copie = get_object_or_404(Loan, id=copie_id)
-        user_id = validated_data["user_id"]
-        user = get_object_or_404(User, id=user_id)
-        current_day = datetime.now()
-        return ""
-
-    def get_expected_return_date(self, obj):
         date_now = date.today()
         after_3_days = date_now + timedelta(days=3)
         return_date = after_3_days
@@ -106,4 +96,3 @@ class LoanSerializer(serializers.ModelSerializer):
             "delivery_date",
             "expected_return_date",
         ]
-        read_only_fields = ["loan_date", "delivery_date", "copie"]
