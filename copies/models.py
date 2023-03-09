@@ -28,14 +28,3 @@ class Loan(models.Model):
 
     class Meta:
         ordering = ("id",)
-        unique_together = ("user", "copie")
-
-    def save(self, *args, **kwargs):
-        try:
-            self.full_clean()
-        except ValidationError as e:
-            if "unique_together" in e.error_dict:
-                raise ValidationError("This user already has a loan of this book")
-            else:
-                raise ValidationError("This user already has a loan of this book")
-        super().save(*args, **kwargs)

@@ -7,6 +7,7 @@ from books.serializers import BookSerializer
 
 class CopieSerializer(serializers.ModelSerializer):
     book = BookSerializer(read_only=True)
+    copies_qnt = serializers.IntegerField(min_value=1, write_only=True)
 
     class Meta:
         model = Copie
@@ -14,6 +15,7 @@ class CopieSerializer(serializers.ModelSerializer):
             "id",
             "book",
             "is_available",
+            "copies_qnt",
         ]
         read_only_fields = ["id", "book"]
         depth = 1
