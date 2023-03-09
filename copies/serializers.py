@@ -1,15 +1,13 @@
 from rest_framework import serializers
 from .models import Copie, Loan
-from users.models import User
+from datetime import timedelta, date
 from users.serializers import UserSerializer
-from django.shortcuts import get_object_or_404
-from datetime import timedelta, date, datetime
-from books.models import Book
-from rest_framework.views import Request, Response, status
-from django import http
+from books.serializers import BookSerializer
 
 
 class CopieSerializer(serializers.ModelSerializer):
+    book = BookSerializer(read_only=True)
+
     class Meta:
         model = Copie
         fields = [
@@ -18,6 +16,7 @@ class CopieSerializer(serializers.ModelSerializer):
             "is_available",
         ]
         read_only_fields = ["id", "book"]
+        depth = 1
 
 
 class LoanSerializer(serializers.ModelSerializer):
@@ -29,70 +28,27 @@ class LoanSerializer(serializers.ModelSerializer):
         date_now = date.today()
         after_3_days = date_now + timedelta(days=3)
         return_date = after_3_days
+        check_until_day = 7 - after_3_days.weekday()
+        if after_3_days.weekday() > 4:
+            return_date += timedelta(days=check_until_day)
 
-        if after_3_days.weekday() == 5:
-            return_date += timedelta(days=2)
-        if after_3_days.weekday() == 6:
-            return_date += timedelta(days=1)
         validated_data["expected_return_date"] = return_date
-        print(validated_data)
         return Loan.objects.create(**validated_data)
-        # email = validated_data.pop("email")
-        # book = validated_data.pop("book")
-        # user = get_object_or_404(User, email=email)
-        # user_has_open_book = Loan.objects.filter(user_id=user.id, delivery_date__isnull=True)
-        # if user_has_open_book.exists():
-        #     # return Response({"message": "Deliver borrowed book to make new loan"}, 204)
-        #     raise serializers.ValidationError({"message": "Deliver borrowed book to make new loan"})
-
-        # book_obj = get_object_or_404(Book, pk=book)
-        # copie_is_available_true = Copie.objects.filter(
-        #     book_id=book_obj.id, is_available=True
-        # ).first()
-        # if copie_is_available_true:
-        #     return Loan.objects.create(
-        #         copie=copie_is_available_true, user=user, **validated_data
-        #     )
-        # else:
-        #     return Response({"message": "book currently unavailable"}, 200)
-
-    # def update(self, instance: Loan, validated_data) -> str:
-    #     email = validated_data.pop("email")
-    #     book = validated_data.pop("book")
-    #     user = get_object_or_404(User, email=email)
-    #     user_has_open_book = instance.objects.filter(
-    #         user_id=user.id, delivery_date__isnull=True
-    #     )
-    #     if user_has_open_book.exists():
-    #         user_has_open_book.first()["delivery_date"] = date.today()
-    #         Loan.save(user_has_open_book)
-    #         return Response({"message": "Successfully returned book"}, 200)
-
-    # return instance
-
-    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Loan
         fields = [
+            "id",
             "email",
-            "user",
-            "copie",
             "loan_date",
             "expected_return_date",
             "delivery_date",
+            "copie",
         ]
-
-        depth = 1
-        # validators = [
-        #     serializers.UniqueTogetherValidator(
-        #         queryset=model.objects.all(),
-        #         fields=("user", "copie"),
-        #         message="Deliver borrowed book to make new loan",
-        #     ),
-        # ]
         read_only_fields = [
             "loan_date",
             "delivery_date",
             "expected_return_date",
+            "copie",
         ]
+        depth = 2

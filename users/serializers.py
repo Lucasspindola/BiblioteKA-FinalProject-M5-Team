@@ -17,7 +17,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
 class FollowBooksSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        exclude = ["followers"]
+        exclude = ["follower_users"]
 
 
 class UserSerializer(serializers.ModelSerializer):
