@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -20,6 +19,9 @@ class Copie(models.Model):
 
 
 class Loan(models.Model):
+    class Meta:
+        ordering = ("id",)
+
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     copie = models.ForeignKey("copies.Copie", on_delete=models.CASCADE)
     loan_date = models.DateTimeField(auto_now_add=True)

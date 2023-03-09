@@ -8,10 +8,10 @@ from books.permissions import CustomBookPermission
 from .models import Loan
 from users.models import User
 from books.models import Book
-from django.http import Http404, HttpResponseNotFound
-from django.shortcuts import get_object_or_404
-from datetime import datetime, timedelta, date
-
+from .permissions import CustomLoanPermission
+from rest_framework.permissions import IsAuthenticated
+from books.pagination import CustomBookPagination
+from django_filters import rest_framework as filters
 
 # Create your views here.
 
@@ -23,22 +23,31 @@ class CopieView(CreateCopieMixin, generics.CreateAPIView):
     serializer_class = CopieSerializer
 
 
-class LoansView(CreateLoanMixin, generics.CreateAPIView):
+class LoansView(CreateLoanMixin, generics.ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomBookPermission]
+    permission_classes = [CustomLoanPermission]
 
     serializer_class = LoanSerializer
     queryset = Loan.objects.all()
     user_queryset = User.objects.all()
     book_queryset = Book.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    pagination_class = CustomBookPagination
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().filter(user=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class LoanDetailView(UpdateLoanMixin, generics.UpdateAPIView):
+class LoanDetailView(UpdateLoanMixin, generics.RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomBookPermission]
+    permission_classes = [CustomLoanPermission, IsAuthenticated]
 
     serializer_class = LoanSerializer
     queryset = Loan.objects.all()

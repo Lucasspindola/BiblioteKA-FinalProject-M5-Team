@@ -45,7 +45,7 @@ class CreateLoanMixin:
             data=self.request.data,
         )
         serializer.is_valid(raise_exception=True)
-        email = self.request.data.pop("email")
+        email = self.request.data.pop("email", None)
         try:
             book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
         except Http404:
@@ -65,19 +65,16 @@ class CreateLoanMixin:
             book_obj.is_available = False
             book_obj.save()
         if copie:
-            try:
-                loan_exists = Loan.objects.filter(
-                    user=user_obj, copie__book=book_obj, delivery_date=None
-                ).exists()
-                if loan_exists:
-                    return Response(
-                        {"detail": "This user already has a loan of this book"}, 409
-                    )
-                serializer.save(user=user_obj, copie=copie)
-                copie.is_available = False
-                copie.save()
-            except ValidationError as err:
-                return Response({"detail": err}, status=status.HTTP_409_CONFLICT)
+            loan_exists = Loan.objects.filter(
+                user=user_obj, copie__book=book_obj, delivery_date=None
+            ).exists()
+            if loan_exists:
+                return Response(
+                    {"detail": "This user already has a loan of this book"}, 409
+                )
+            serializer.save(user=user_obj, copie=copie)
+            copie.is_available = False
+            copie.save()
         else:
             return Response(
                 {"detail": "Book currently unavailable"},
@@ -92,6 +89,7 @@ class UpdateLoanMixin:
     user_queryset = None
 
     def patch(self, request, *args, **kwargs):
+        self.check_object_permissions(request, request.user)
         serializer_body_check = self.get_serializer(data=request.data)
         serializer_body_check.is_valid(raise_exception=True)
         return super().patch(request, *args, **kwargs)
@@ -141,26 +139,25 @@ class UpdateLoanMixin:
             raise self.book_queryset.model.DoesNotExist(
                 f"{self.book_queryset.model.__name__} not found"
             )
-        print(self.request.data, "=" * 100)
-        try:
-            user_obj = get_object_or_404(
-                self.user_queryset, email=self.request.data["email"]
-            )
-        except Http404:
-            raise self.user_queryset.model.DoesNotExist(
-                f"{self.user_queryset.model.__name__} not found"
-            )
+        user_obj = self.request.user
+        email = self.request.data.get("email", None)
+        if email:
+            try:
+                user_obj = get_object_or_404(
+                    self.user_queryset, email=self.request.data.get("email")
+                )
+            except Http404:
+                raise self.user_queryset.model.DoesNotExist(
+                    f"{self.user_queryset.model.__name__} not found"
+                )
 
         loan_obj = get_object_or_404(
             self.queryset, user=user_obj, copie__book=book_obj, delivery_date=None
         )
 
-        # loan_obj.delivery_date = date.today()
         loan_obj.copie.is_available = True
         loan_obj.copie.save()
         loan_obj.copie.book.is_available = True
         loan_obj.copie.book.save()
-
-        self.check_object_permissions(self.request, loan_obj)
 
         return loan_obj
