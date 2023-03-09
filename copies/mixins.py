@@ -3,9 +3,11 @@ from books.models import Book
 from rest_framework.views import Request, Response, status
 from .models import Copie, Loan
 from books.serializers import BookSerializer
+from users.models import User
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseNotFound
 from datetime import date
+from datetime import timedelta
 
 
 class CreateCopieMixin:
@@ -45,7 +47,9 @@ class CreateLoanMixin:
             data=self.request.data,
         )
         serializer.is_valid(raise_exception=True)
+
         email = self.request.data.pop("email")
+
         try:
             book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
         except Http404:
@@ -55,6 +59,24 @@ class CreateLoanMixin:
 
         try:
             user_obj = get_object_or_404(self.user_queryset, email=email)
+            # Aqui
+            if (
+                user_obj.is_blocked_date != None
+                and user_obj.is_blocked_date < date.today()
+            ):
+                user_obj.is_blocked_date = None
+                user_obj.save()
+            if (
+                user_obj.is_blocked_date != None
+                and user_obj.is_blocked_date > date.today()
+            ):
+                return Response(
+                    {
+                        "detail": f"User will be unlocked from day {user_obj.is_blocked_date}"
+                    },
+                    404,
+                )
+            # ate aqui
         except Http404:
             return Response(
                 {"detail": f"{self.user_queryset.model.__name__} not found"}, 404
@@ -111,7 +133,12 @@ class UpdateLoanMixin:
         return Response(serializer.data)
 
     def perform_update(self, serializer):
-        serializer.save(delivery_date=date.today())
+        instance = serializer.save(delivery_date=date.today())
+        # Aqui--
+        if instance.expected_return_date < date.today():
+            instance.user.is_blocked_date = date.today() + timedelta(days=7)
+            instance.save()
+        # até aqui
 
     def get_object(self):
         assert self.book_queryset is not None, (
