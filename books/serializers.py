@@ -16,7 +16,7 @@ class BookSerializer(serializers.ModelSerializer):
             "description",
             "author",
             "copies_qnt",
-            "is_avaliable",
+            "is_available",
         ]
 
     def create(self, validated_data: dict):
@@ -36,7 +36,7 @@ class FollowSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
-            "will_be_avaliable_date",
+            "will_be_available_date",
         ]
-        read_only_fields = ["will_be_avaliable_date"]
+        read_only_fields = ["will_be_available_date"]
         depth = 1

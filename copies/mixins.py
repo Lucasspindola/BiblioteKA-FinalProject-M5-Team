@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
 from books.models import Book
 from rest_framework.views import Request, Response, status
-from .models import Copie
+from .models import Copie, Loan
 from books.serializers import BookSerializer
 from django.core.exceptions import ValidationError
-from django.http import Http404
+from django.http import Http404, HttpResponseNotFound
 from datetime import date
 
 
@@ -61,8 +61,18 @@ class CreateLoanMixin:
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
+        if copies.count() < 2:
+            book_obj.is_available = False
+            book_obj.save()
         if copie:
             try:
+                loan_exists = Loan.objects.filter(
+                    user=user_obj, copie__book=book_obj, delivery_date=None
+                ).exists()
+                if loan_exists:
+                    return Response(
+                        {"detail": "This user already has a loan of this book"}, 409
+                    )
                 serializer.save(user=user_obj, copie=copie)
                 copie.is_available = False
                 copie.save()
@@ -70,7 +80,7 @@ class CreateLoanMixin:
                 return Response({"detail": err}, status=status.HTTP_409_CONFLICT)
         else:
             return Response(
-                {"message": "Book currently unavailable"},
+                {"detail": "Book currently unavailable"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -87,11 +97,21 @@ class UpdateLoanMixin:
         return super().patch(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()  # retorna o Loan
+        try:
+            instance = self.get_object()  # retorna o Loan
+        except (
+            self.book_queryset.model.DoesNotExist,
+            self.user_queryset.model.DoesNotExist,
+        ) as err:
+            return Response({"detail": f"{err}"}, status=status.HTTP_404_NOT_FOUND)
+        request.data["delivery_date"] = date.today()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        serializer.save(delivery_date=date.today())
 
     def get_object(self):
         assert self.book_queryset is not None, (
@@ -104,7 +124,6 @@ class UpdateLoanMixin:
             % self.__class__.__name__
         )
 
-        # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
         assert lookup_url_kwarg in self.kwargs, (
@@ -114,18 +133,34 @@ class UpdateLoanMixin:
             % (self.__class__.__name__, lookup_url_kwarg)
         )
 
-        filter_kwargs = {
-            self.lookup_field: self.kwargs[lookup_url_kwarg]
-        }  # Pegar o id do book
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
 
-        book_obj = get_object_or_404(self.book_queryset, **filter_kwargs)
-        user_obj = get_object_or_404(
-            self.user_queryset, email=self.request.data["email"]
+        try:
+            book_obj = get_object_or_404(self.book_queryset, **filter_kwargs)
+        except Http404:
+            raise self.book_queryset.model.DoesNotExist(
+                f"{self.book_queryset.model.__name__} not found"
+            )
+        print(self.request.data, "=" * 100)
+        try:
+            user_obj = get_object_or_404(
+                self.user_queryset, email=self.request.data["email"]
+            )
+        except Http404:
+            raise self.user_queryset.model.DoesNotExist(
+                f"{self.user_queryset.model.__name__} not found"
+            )
+
+        loan_obj = get_object_or_404(
+            self.queryset, user=user_obj, copie__book=book_obj, delivery_date=None
         )
-        obj = get_object_or_404(self.queryset, user=user_obj, copie__book=book_obj)
 
-        if not obj.delivery_date:
-            obj.delivery_date = date.today()
-        self.check_object_permissions(self.request, obj)
+        # loan_obj.delivery_date = date.today()
+        loan_obj.copie.is_available = True
+        loan_obj.copie.save()
+        loan_obj.copie.book.is_available = True
+        loan_obj.copie.book.save()
 
-        return obj
+        self.check_object_permissions(self.request, loan_obj)
+
+        return loan_obj

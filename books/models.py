@@ -14,7 +14,7 @@ class Book(models.Model):
     )
     description = models.CharField(max_length=255, blank=True, null=True)
     author = models.CharField(max_length=255)
-    is_avaliable = models.BooleanField(default=True)
+    is_available = models.BooleanField(default=True)
     follower_users = models.ManyToManyField(
         "users.User", through="Follow", related_name="following_books"
     )
@@ -23,4 +23,4 @@ class Book(models.Model):
 class Follow(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    will_be_avaliable_date = models.DateTimeField(null=True, blank=True)
+    will_be_available_date = models.DateTimeField(null=True, blank=True)
