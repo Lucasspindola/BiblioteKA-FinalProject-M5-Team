@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from .models import Copie, Loan
-from users.models import User
-from django.shortcuts import get_object_or_404
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
+from users.serializers import UserSerializer
+from books.serializers import BookSerializer
 
 
 class CopieSerializer(serializers.ModelSerializer):
-    copies_qnt = serializers.IntegerField(min_value=1, write_only=True)
+    book = BookSerializer(read_only=True)
 
     class Meta:
         model = Copie
@@ -14,60 +14,41 @@ class CopieSerializer(serializers.ModelSerializer):
             "id",
             "book",
             "is_available",
-            "copies_qnt",
         ]
         read_only_fields = ["id", "book"]
+        depth = 1
 
 
 class LoanSerializer(serializers.ModelSerializer):
-    expected_return_date = serializers.SerializerMethodField()
+    email = serializers.EmailField(write_only=True)
+    copie = CopieSerializer(read_only=True)
 
-    def create(self, validated_data: dict):
-        copie_id = validated_data.get("copie_id")
-        copie = get_object_or_404(Loan, id=copie_id)
-        user_id = validated_data["user_id"]
-        user = get_object_or_404(User, id=user_id)
-        current_day = datetime.now()
-        # Cada livro só poderá ser emprestado por um período fixo de tempo
-        # Deverá ser criada uma lógica onde, se a devolução cair em um fim de semana (sábado ou domingo),
-        # a data de retorno deverá ser modificada para ser no próximo dia útil
-        max_loan_period = timedelta(days=7)
-        expected_return = current_day + max_loan_period
-        if expected_return.weekday() >= 5:  # sábado é 5 e domingo é 6
-            expected_return = expected_return + timedelta(
-                days=(7 - expected_return.weekday())
-            )
-
-        # Todos os livros emprestados deverão ter uma data de retorno
-
-        # Caso o estudante não devolva o livro até o prazo estipulado,
-        # deverá ser impedido (bloqueado) de solicitar outros empréstimos.
-
-        # Se um estudante não efetuar a devolução dos livros no prazo estipulado,
-        # ele não poderá emprestar mais livros até completar a devolução dos anteriores.
-        # Após completar as devoluções pendentes, o bloqueio deve permanecer por alguns dias.
-        return ""
-
-    def get_expected_return_date(self, obj):
+    def create(self, validated_data):
+        email = validated_data.pop("email")
         date_now = date.today()
-
         after_3_days = date_now + timedelta(days=3)
         return_date = after_3_days
+        check_until_day = 7 - after_3_days.weekday()
+        if after_3_days.weekday() > 4:
+            return_date += timedelta(days=check_until_day)
 
-        if after_3_days.weekday() == 5:
-            return_date += timedelta(days=2)
-        if after_3_days.weekday() == 6:
-            return_date += timedelta(days=1)
-
-        return return_date
+        validated_data["expected_return_date"] = return_date
+        return Loan.objects.create(**validated_data)
 
     class Meta:
         model = Loan
         fields = [
-            "user",
-            "copie",
+            "id",
+            "email",
             "loan_date",
             "expected_return_date",
             "delivery_date",
+            "copie",
         ]
-        read_only_fields = ["loan_date", "delivery_date"]
+        read_only_fields = [
+            "loan_date",
+            "delivery_date",
+            "expected_return_date",
+            "copie",
+        ]
+        depth = 2

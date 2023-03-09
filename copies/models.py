@@ -1,12 +1,7 @@
 from django.db import models
-import datetime
+from django.core.exceptions import ValidationError
 
 # Create your models here.
-
-
-"""
-    1. Adicionar nome da tabela de emprestimos
-"""
 
 
 class Copie(models.Model):
@@ -25,11 +20,22 @@ class Copie(models.Model):
 
 
 class Loan(models.Model):
-    class Meta:
-        ordering = ("id",)
-
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     copie = models.ForeignKey("copies.Copie", on_delete=models.CASCADE)
     loan_date = models.DateTimeField(auto_now_add=True)
     expected_return_date = models.DateField()
     delivery_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("id",)
+        unique_together = ("user", "copie")
+
+    def save(self, *args, **kwargs):
+        try:
+            self.full_clean()
+        except ValidationError as e:
+            if "unique_together" in e.error_dict:
+                raise ValidationError("This user already has a loan of this book")
+            else:
+                raise ValidationError("This user already has a loan of this book")
+        super().save(*args, **kwargs)

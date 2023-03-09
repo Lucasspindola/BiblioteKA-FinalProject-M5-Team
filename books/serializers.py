@@ -34,6 +34,7 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = [
+            "id",
             "user",
             "will_be_avaliable_date",
         ]
