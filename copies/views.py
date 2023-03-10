@@ -8,10 +8,11 @@ from books.permissions import CustomBookPermission
 from .models import Loan
 from users.models import User
 from books.models import Book
-from .permissions import CustomLoanPermission
+from .permissions import CustomLoanPermission, CustomLoanHistoryPermission
 from rest_framework.permissions import IsAuthenticated
 from books.pagination import CustomBookPagination
 from django_filters import rest_framework as filters
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -23,7 +24,7 @@ class CopieView(CreateCopieMixin, generics.CreateAPIView):
     serializer_class = CopieSerializer
 
 
-class LoansView(CreateLoanMixin, generics.ListCreateAPIView):
+class LoansView(CreateLoanMixin, generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomLoanPermission]
 
@@ -34,8 +35,20 @@ class LoansView(CreateLoanMixin, generics.ListCreateAPIView):
 
     pagination_class = CustomBookPagination
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().filter(user=request.user)
+
+class LoanHistoryView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, CustomLoanHistoryPermission]
+
+    serializer_class = LoanSerializer
+    queryset = Loan.objects.all()
+
+    pagination_class = CustomBookPagination
+
+    def list(self, request: Request, *args, **kwargs):
+        user_obj = get_object_or_404(User, pk=kwargs["user_id"])
+        self.check_object_permissions(request, user_obj)
+        queryset = self.get_queryset().filter(user=user_obj)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
