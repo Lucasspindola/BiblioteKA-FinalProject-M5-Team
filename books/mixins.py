@@ -27,6 +27,10 @@ class CustomFollowMixin:
 
         now = datetime.now()
 
+        if book.is_available == True:
+            serializer.validated_data["will_be_available_date"] = None
+            serializer.save(user_id=self.request.user.id, book_id=self.kwargs.get("pk"))
+        
         if book.is_available == False:
             for i in loans:
                 month_loan = int(i.expected_return_date.strftime("%m"))
@@ -38,14 +42,11 @@ class CustomFollowMixin:
                     day = int(list_days[0])
                     if day == day_loan:
                         serializer.validated_data["will_be_available_date"] = datetime.strftime(i.expected_return_date, "%Y-%m-%d")
+                        serializer.save(user_id=self.request.user.id, book_id=self.kwargs.get("pk"))
 
                 list_days.append(i.expected_return_date.strftime("%d"))
                 list_days.sort(key=None, reverse=False)
                 day = int(list_days[0])
                 if day == day_loan:
                     serializer.validated_data["will_be_available_date"] = datetime.strftime(i.expected_return_date, "%Y-%m-%d")
-
-            serializer.save(user_id=self.request.user.id, book_id=self.kwargs.get("pk"))
-
-        serializer.validated_data["will_be_available_date"] = None
-        serializer.save(user_id=self.request.user.id, book_id=self.kwargs.get("pk"))
+                    serializer.save(user_id=self.request.user.id, book_id=self.kwargs.get("pk"))
