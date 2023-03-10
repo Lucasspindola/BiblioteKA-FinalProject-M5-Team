@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Copie, Loan
 from datetime import timedelta, date
-from users.serializers import UserSerializer
 from books.serializers import BookSerializer
 
 

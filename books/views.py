@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from .models import Book, Follow
 from .serializers import BookSerializer, FollowSerializer
 from rest_framework.generics import (
