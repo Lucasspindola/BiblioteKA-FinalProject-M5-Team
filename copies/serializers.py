@@ -36,6 +36,22 @@ class LoanSerializer(serializers.ModelSerializer):
         validated_data["expected_return_date"] = return_date
         return Loan.objects.create(**validated_data)
 
+    def update(self, instance, validated_data):
+        instance.delivery_date = validated_data["delivery_date"]
+        instance.copie.is_available = True
+        instance.copie.save()
+        instance.copie.book.is_available = True
+        instance.copie.book.save()
+        instance.save()
+        # # Aqui--
+        # print(instance.expected_return_date, "AQUIIIIII")
+        # date_e = datetime(instance.expected_return_date)
+        # if date_e < date.today():
+        #     instance.user.is_blocked_date = date.today() + timedelta(days=7)
+        #     instance.save()
+        # até aqui
+        return instance
+
     class Meta:
         model = Loan
         fields = [

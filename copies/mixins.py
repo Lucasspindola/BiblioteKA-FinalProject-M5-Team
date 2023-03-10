@@ -6,6 +6,8 @@ from books.serializers import BookSerializer
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseNotFound
 from datetime import date
+from datetime import timedelta, datetime
+from .exceptions import CustomDoesNotExists
 
 
 class CreateCopieMixin:
@@ -57,7 +59,7 @@ class CreateLoanMixin:
             user_obj = get_object_or_404(self.user_queryset, email=email)
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found"}, 404
+                {"detail": f"{self.user_queryset.model.__name__} not found abc"}, 404
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
@@ -94,22 +96,9 @@ class UpdateLoanMixin:
         serializer_body_check.is_valid(raise_exception=True)
         return super().patch(request, *args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()  # retorna o Loan
-        except (
-            self.book_queryset.model.DoesNotExist,
-            self.user_queryset.model.DoesNotExist,
-        ) as err:
-            return Response({"detail": f"{err}"}, status=status.HTTP_404_NOT_FOUND)
-        request.data["delivery_date"] = date.today()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
     def perform_update(self, serializer):
-        serializer.save(delivery_date=date.today())
+        instance = serializer.save(delivery_date=date.today())
+        return instance
 
     def get_object(self):
         assert self.book_queryset is not None, (
@@ -136,28 +125,19 @@ class UpdateLoanMixin:
         try:
             book_obj = get_object_or_404(self.book_queryset, **filter_kwargs)
         except Http404:
-            raise self.book_queryset.model.DoesNotExist(
-                f"{self.book_queryset.model.__name__} not found"
+            raise CustomDoesNotExists(f"{self.book_queryset.model.__name__} not found")
+
+        try:
+            user_obj = get_object_or_404(
+                self.user_queryset, email=self.request.data["email"]
             )
-        user_obj = self.request.user
-        email = self.request.data.get("email", None)
-        if email:
-            try:
-                user_obj = get_object_or_404(
-                    self.user_queryset, email=self.request.data.get("email")
-                )
-            except Http404:
-                raise self.user_queryset.model.DoesNotExist(
-                    f"{self.user_queryset.model.__name__} not found"
-                )
+        except Http404:
+            raise CustomDoesNotExists(f"{self.user_queryset.model.__name__} not found")
 
         loan_obj = get_object_or_404(
             self.queryset, user=user_obj, copie__book=book_obj, delivery_date=None
         )
 
-        loan_obj.copie.is_available = True
-        loan_obj.copie.save()
-        loan_obj.copie.book.is_available = True
-        loan_obj.copie.book.save()
+        self.check_object_permissions(self.request, loan_obj)
 
         return loan_obj
