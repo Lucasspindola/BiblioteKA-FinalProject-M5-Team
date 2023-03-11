@@ -3,7 +3,6 @@ from copies.models import Copie, Loan
 from rest_framework.views import Response, Request
 from datetime import datetime, timedelta
 
-
 class CustomFollowMixin:
     def post(self, request: Request, *args, **kwargs: dict):
         try:
