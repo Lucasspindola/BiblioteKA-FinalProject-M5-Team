@@ -8,6 +8,7 @@ from django.http import Http404, HttpResponseNotFound
 from datetime import date
 from datetime import timedelta, datetime
 from .exceptions import CustomDoesNotExists
+from django.utils.timezone import make_aware
 
 
 class CreateCopieMixin:
@@ -57,6 +58,23 @@ class CreateLoanMixin:
 
         try:
             user_obj = get_object_or_404(self.user_queryset, email=email)
+
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date > make_aware(datetime.today())
+            ):
+                return Response(
+                    {
+                        "detail": f"User will be unlocked from day {user_obj.is_blocked_date}"
+                    },
+                    404,
+                )
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date.date() < date.today()
+            ):
+                user_obj.is_blocked_date = None
+                user_obj.save()
         except Http404:
             return Response(
                 {"detail": f"{self.user_queryset.model.__name__} not found"}, 404

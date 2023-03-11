@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Copie, Loan
 from datetime import timedelta, date
 from books.serializers import BookSerializer
+from datetime import timedelta, datetime
 
 
 class CopieSerializer(serializers.ModelSerializer):
@@ -43,13 +44,15 @@ class LoanSerializer(serializers.ModelSerializer):
         instance.copie.book.is_available = True
         instance.copie.book.save()
         instance.save()
-        # # Aqui--
-        # print(instance.expected_return_date, "AQUIIIIII")
-        # date_e = datetime(instance.expected_return_date)
-        # if date_e < date.today():
-        #     instance.user.is_blocked_date = date.today() + timedelta(days=7)
-        #     instance.save()
-        # até aqui
+
+        date_e_str = instance.expected_return_date.strftime("%Y-%m-%d")
+        date_e = datetime.strptime(date_e_str, "%Y-%m-%d")
+        date_e_date = date_e.date()
+
+        if date_e_date < date.today():
+            instance.user.is_blocked_date = datetime.now() + timedelta(days=7)
+            instance.user.save()
+
         return instance
 
     class Meta:
