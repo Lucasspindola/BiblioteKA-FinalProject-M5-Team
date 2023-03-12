@@ -64,25 +64,7 @@ class CreateLoanMixin:
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
         if copies.count() < 2:
-            loan = Loan.objects.filter(copie__book=book_obj.id).first()
             book_obj.is_available = False
-            book_obj.will_be_available_date = datetime.strftime(loan.expected_return_date, "%Y-%m-%d")
-            """ now = datetime.now()
-            for i in loans:
-                month_loan = int(i.expected_return_date.strftime("%m"))
-                day_loan = int(i.expected_return_date.strftime("%d"))
-                list_days = []
-                if now.month == month_loan:
-                    list_days.append(i.expected_return_date.strftime("%d"))
-                    list_days.sort(key=None, reverse=False)
-                    day = int(list_days[0])
-                    if day == day_loan:
-                        book_obj.will_be_available_date = datetime.strftime(i.expected_return_date, "%Y-%m-%d")
-                list_days.append(i.expected_return_date.strftime("%d"))
-                list_days.sort(key=None, reverse=False)
-                day = int(list_days[0])
-                if day == day_loan:
-                    book_obj.will_be_available_date = datetime.strftime(i.expected_return_date, "%Y-%m-%d") """
             book_obj.save()
         if copie:
             loan_exists = Loan.objects.filter(
@@ -95,6 +77,12 @@ class CreateLoanMixin:
             serializer.save(user=user_obj, copie=copie)
             copie.is_available = False
             copie.save()
+            loan = Loan.objects.filter(
+                user=user_obj,
+                delivery_date=None,
+                ).first()
+            book_obj.will_be_available_date = datetime.strftime(loan.expected_return_date, "%Y-%m-%d")
+            book_obj.save()
         else:
             return Response(
                 {"detail": "Book currently unavailable"},
