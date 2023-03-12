@@ -15,7 +15,7 @@ class Book(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
     author = models.CharField(max_length=255)
     is_available = models.BooleanField(default=True)
-    will_be_available_date = models.DateField(null=True, default=None)
+    will_be_available_date = models.DateField(null=True, blank=True)
     follower_users = models.ManyToManyField(
         "users.User", through="Follow", related_name="following_books"
     )
