@@ -6,7 +6,6 @@ from books.serializers import BookSerializer
 from django.http import Http404
 from datetime import date
 from .exceptions import CustomDoesNotExists
-from django.utils.timezone import make_aware
 
 
 class CreateCopieMixin:
@@ -51,7 +50,8 @@ class CreateLoanMixin:
             book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
         except Http404:
             return Response(
-                {"detail": f"{self.book_queryset.model.__name__} not found"}, 404
+                {"detail": f"{self.book_queryset.model.__name__} not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
@@ -63,7 +63,7 @@ class CreateLoanMixin:
             ):
                 return Response(
                     {"detail": f"User is blocked until {user_obj.is_blocked_date}"},
-                    404,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
             if (
                 user_obj.is_blocked_date is not None
@@ -73,7 +73,8 @@ class CreateLoanMixin:
                 user_obj.save()
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found"}, 404
+                {"detail": f"{self.user_queryset.model.__name__} not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
@@ -86,7 +87,8 @@ class CreateLoanMixin:
             ).exists()
             if loan_exists:
                 return Response(
-                    {"detail": "This user already has a loan of this book"}, 409
+                    {"detail": "This user already has a loan of this book"},
+                    status=status.HTTP_409_CONFLICT,
                 )
             serializer.save(user=user_obj, copie=copie)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -95,7 +97,6 @@ class CreateLoanMixin:
                 {"detail": "Book currently unavailable"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        
 
 
 class UpdateLoanMixin:
