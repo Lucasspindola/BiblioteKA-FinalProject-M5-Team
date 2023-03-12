@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from .models import Copie, Loan
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from books.serializers import BookSerializer
-from datetime import timedelta, datetime
 
 
 class CopieSerializer(serializers.ModelSerializer):
@@ -27,30 +26,24 @@ class LoanSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         email = validated_data.pop("email")
-        date_now = date.today()
-        after_3_days = date_now + timedelta(days=3)
+        after_3_days = date.today() + timedelta(days=3)
         return_date = after_3_days
         check_until_day = 7 - after_3_days.weekday()
         if after_3_days.weekday() > 4:
             return_date += timedelta(days=check_until_day)
-
         validated_data["expected_return_date"] = return_date
         return Loan.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.delivery_date = validated_data["delivery_date"]
+        instance.delivery_date = date.today()
         instance.copie.is_available = True
         instance.copie.save()
         instance.copie.book.is_available = True
         instance.copie.book.save()
         instance.save()
 
-        date_e_str = instance.expected_return_date.strftime("%Y-%m-%d")
-        date_e = datetime.strptime(date_e_str, "%Y-%m-%d")
-        date_e_date = date_e.date()
-
-        if date_e_date < date.today():
-            instance.user.is_blocked_date = datetime.now() + timedelta(days=7)
+        if instance.expected_return_date < date.today():
+            instance.user.is_blocked_date = date.today() + timedelta(days=7)
             instance.user.save()
 
         return instance

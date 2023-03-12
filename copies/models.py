@@ -27,6 +27,3 @@ class Loan(models.Model):
     loan_date = models.DateTimeField(auto_now_add=True)
     expected_return_date = models.DateField()
     delivery_date = models.DateField(null=True, blank=True)
-
-    class Meta:
-        ordering = ("id",)
