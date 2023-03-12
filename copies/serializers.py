@@ -41,6 +41,7 @@ class LoanSerializer(serializers.ModelSerializer):
         instance.copie.is_available = True
         instance.copie.save()
         instance.copie.book.is_available = True
+        instance.copie.book.will_be_available_date = None
         instance.copie.book.save()
         instance.save()
         # # Aqui--
