@@ -6,6 +6,7 @@ from books.serializers import BookSerializer
 from django.http import Http404
 from datetime import date
 from .exceptions import CustomDoesNotExists
+from django.utils.timezone import make_aware
 
 
 class CreateCopieMixin:
@@ -55,9 +56,24 @@ class CreateLoanMixin:
 
         try:
             user_obj = get_object_or_404(self.user_queryset, email=email)
+
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date > date.today()
+            ):
+                return Response(
+                    {"detail": f"User is blocked until {user_obj.is_blocked_date}"},
+                    404,
+                )
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date < date.today()
+            ):
+                user_obj.is_blocked_date = None
+                user_obj.save()
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found abc"}, 404
+                {"detail": f"{self.user_queryset.model.__name__} not found"}, 404
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
@@ -91,10 +107,6 @@ class UpdateLoanMixin:
         serializer_body_check = self.get_serializer(data=request.data)
         serializer_body_check.is_valid(raise_exception=True)
         return super().patch(request, *args, **kwargs)
-
-    def perform_update(self, serializer):
-        instance = serializer.save(delivery_date=date.today())
-        return instance
 
     def get_object(self):
         assert self.book_queryset is not None, (
