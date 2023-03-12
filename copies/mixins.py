@@ -77,7 +77,7 @@ class CreateLoanMixin:
                 user_obj.save()
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found"}, 404
+                {"detail": f"{self.user_queryset.model.__name__} not found abc"}, 404
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
