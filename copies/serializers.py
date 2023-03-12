@@ -34,13 +34,27 @@ class LoanSerializer(serializers.ModelSerializer):
             return_date += timedelta(days=check_until_day)
 
         validated_data["expected_return_date"] = return_date
-        return Loan.objects.create(**validated_data)
+        loan_obj = Loan.objects.create(**validated_data)
+
+        copie = validated_data["copie"]
+        copie.is_available = False
+        copie.save()
+        if not copie.book.is_available:
+            exp_date = (
+                Loan.objects.filter(copie__book=copie.book, delivery_date=None)
+                .first()
+                .expected_return_date
+            )
+            loan_obj.copie.book.will_be_available_date = exp_date
+            loan_obj.copie.book.save()
+        return loan_obj
 
     def update(self, instance, validated_data):
         instance.delivery_date = validated_data["delivery_date"]
         instance.copie.is_available = True
         instance.copie.save()
         instance.copie.book.is_available = True
+        instance.copie.book.will_be_available_date = None
         instance.copie.book.save()
         instance.save()
         # # Aqui--

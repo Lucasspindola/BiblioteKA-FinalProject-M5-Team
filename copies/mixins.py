@@ -3,10 +3,8 @@ from books.models import Book
 from rest_framework.views import Request, Response, status
 from .models import Copie, Loan
 from books.serializers import BookSerializer
-from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponseNotFound
+from django.http import Http404
 from datetime import date
-from datetime import timedelta, datetime
 from .exceptions import CustomDoesNotExists
 
 
@@ -75,15 +73,13 @@ class CreateLoanMixin:
                     {"detail": "This user already has a loan of this book"}, 409
                 )
             serializer.save(user=user_obj, copie=copie)
-            copie.is_available = False
-            copie.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
                 {"detail": "Book currently unavailable"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
 
 
 class UpdateLoanMixin:

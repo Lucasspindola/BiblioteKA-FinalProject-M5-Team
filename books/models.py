@@ -18,9 +18,9 @@ class Book(models.Model):
     follower_users = models.ManyToManyField(
         "users.User", through="Follow", related_name="following_books"
     )
+    will_be_available_date = models.DateField(null=True, blank=True)
 
 
 class Follow(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    will_be_available_date = models.DateTimeField(null=True, blank=True)
