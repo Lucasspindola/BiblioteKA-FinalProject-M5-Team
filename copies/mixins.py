@@ -3,10 +3,8 @@ from books.models import Book
 from rest_framework.views import Request, Response, status
 from .models import Copie, Loan
 from books.serializers import BookSerializer
-from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponseNotFound
+from django.http import Http404
 from datetime import date
-from datetime import timedelta, datetime
 from .exceptions import CustomDoesNotExists
 
 
@@ -52,14 +50,31 @@ class CreateLoanMixin:
             book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
         except Http404:
             return Response(
-                {"detail": f"{self.book_queryset.model.__name__} not found"}, 404
+                {"detail": f"{self.book_queryset.model.__name__} not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
             user_obj = get_object_or_404(self.user_queryset, email=email)
+
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date > date.today()
+            ):
+                return Response(
+                    {"detail": f"User is blocked until {user_obj.is_blocked_date}"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if (
+                user_obj.is_blocked_date is not None
+                and user_obj.is_blocked_date < date.today()
+            ):
+                user_obj.is_blocked_date = None
+                user_obj.save()
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found abc"}, 404
+                {"detail": f"{self.user_queryset.model.__name__} not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
         copie = copies.first()
@@ -72,24 +87,16 @@ class CreateLoanMixin:
             ).exists()
             if loan_exists:
                 return Response(
-                    {"detail": "This user already has a loan of this book"}, 409
+                    {"detail": "This user already has a loan of this book"},
+                    status=status.HTTP_409_CONFLICT,
                 )
             serializer.save(user=user_obj, copie=copie)
-            copie.is_available = False
-            copie.save()
-            loan = Loan.objects.filter(
-                user=user_obj,
-                delivery_date=None,
-                ).first()
-            book_obj.will_be_available_date = datetime.strftime(loan.expected_return_date, "%Y-%m-%d")
-            book_obj.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
                 {"detail": "Book currently unavailable"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UpdateLoanMixin:
@@ -101,10 +108,6 @@ class UpdateLoanMixin:
         serializer_body_check = self.get_serializer(data=request.data)
         serializer_body_check.is_valid(raise_exception=True)
         return super().patch(request, *args, **kwargs)
-
-    def perform_update(self, serializer):
-        instance = serializer.save(delivery_date=date.today())
-        return instance
 
     def get_object(self):
         assert self.book_queryset is not None, (

@@ -9,7 +9,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import CustomBookPermission
 from .pagination import CustomBookPagination
 from django_filters import rest_framework as filters
-from rest_framework.views import Response
 from rest_framework.permissions import IsAuthenticated
 from .mixins import CustomFollowMixin
 

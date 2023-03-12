@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Book, Follow
 from rest_framework import serializers
-from users.serializers import UserSerializer
 from copies.models import Copie
 
 
@@ -29,14 +28,15 @@ class BookSerializer(serializers.ModelSerializer):
 
         return book
 
+
 class FollowSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    book = BookSerializer(read_only=True)
 
     class Meta:
         model = Follow
         fields = [
             "id",
-            "user",
+            "book",
             "created_at",
         ]
         read_only_fields = ["created_at"]
