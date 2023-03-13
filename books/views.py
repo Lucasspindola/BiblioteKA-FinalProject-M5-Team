@@ -4,6 +4,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
     CreateAPIView,
+    DestroyAPIView
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import CustomBookPermission
@@ -42,5 +43,13 @@ class FollowView(CustomFollowMixin, CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+
+
+class DestroyFollowView(DestroyAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
