@@ -1,11 +1,13 @@
 from .models import Book, Follow
 from rest_framework.views import Response, Request
-from django.shortcuts import get_object_or_404
 
 
 class CustomFollowMixin:
     def post(self, request: Request, *args, **kwargs: dict):
-        book = get_object_or_404(Book, id=kwargs.get("pk"))
+        try:
+            book = Book.objects.get(id=kwargs.get("pk"))
+        except Book.DoesNotExist:
+            return Response({"detail": "Book not found."}, 404)
 
         try:
             followers = Follow.objects.get(book=book, user=request.user)
