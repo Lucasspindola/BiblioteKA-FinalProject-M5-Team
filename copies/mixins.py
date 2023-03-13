@@ -50,7 +50,7 @@ class CreateLoanMixin:
             book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
         except Http404:
             return Response(
-                {"detail": f"{self.book_queryset.model.__name__} not found"},
+                {"detail": f"{self.book_queryset.model.__name__} not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -62,7 +62,7 @@ class CreateLoanMixin:
                 and user_obj.is_blocked_date > date.today()
             ):
                 return Response(
-                    {"detail": f"User is blocked until {user_obj.is_blocked_date}"},
+                    {"detail": f"User is blocked until {user_obj.is_blocked_date}."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
             if (
@@ -73,7 +73,7 @@ class CreateLoanMixin:
                 user_obj.save()
         except Http404:
             return Response(
-                {"detail": f"{self.user_queryset.model.__name__} not found"},
+                {"detail": f"{self.user_queryset.model.__name__} not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
         copies = Copie.objects.filter(book_id=book_obj.id, is_available=True)
@@ -87,14 +87,14 @@ class CreateLoanMixin:
             ).exists()
             if loan_exists:
                 return Response(
-                    {"detail": "This user already has a loan of this book"},
+                    {"detail": "This user already has a loan of this book."},
                     status=status.HTTP_409_CONFLICT,
                 )
             serializer.save(user=user_obj, copie=copie)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
-                {"detail": "Book currently unavailable"},
+                {"detail": "Book currently unavailable."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -134,14 +134,14 @@ class UpdateLoanMixin:
         try:
             book_obj = get_object_or_404(self.book_queryset, **filter_kwargs)
         except Http404:
-            raise CustomDoesNotExists(f"{self.book_queryset.model.__name__} not found")
+            raise CustomDoesNotExists(f"{self.book_queryset.model.__name__} not found.")
 
         try:
             user_obj = get_object_or_404(
                 self.user_queryset, email=self.request.data["email"]
             )
         except Http404:
-            raise CustomDoesNotExists(f"{self.user_queryset.model.__name__} not found")
+            raise CustomDoesNotExists(f"{self.user_queryset.model.__name__} not found.")
 
         loan_obj = get_object_or_404(
             self.queryset, user=user_obj, copie__book=book_obj, delivery_date=None

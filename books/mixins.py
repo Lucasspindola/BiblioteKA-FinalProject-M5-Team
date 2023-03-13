@@ -7,7 +7,7 @@ class CustomFollowMixin:
         try:
             book = Book.objects.get(id=kwargs.get("pk"))
         except Book.DoesNotExist:
-            return Response({"detail": "Not found."}, 404)
+            return Response({"detail": "Book not found."}, 404)
 
         try:
             followers = Follow.objects.get(book=book, user=request.user)
