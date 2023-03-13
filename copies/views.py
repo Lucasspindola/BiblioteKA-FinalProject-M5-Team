@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework.views import Request, Response, status
+from rest_framework.views import Request, Response
 from rest_framework import generics
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import CopieSerializer, LoanSerializer
