@@ -7,7 +7,7 @@ Starting Project
 1- Clone the repository
 2- Create a virtual environment
 python3 -m venv myenv
-3- Activate the virtual environment
+3- Activate the virtual environment.
 source myenv/bin/activate
 4- Install project dependencies
 pip install -r requirements.txt
