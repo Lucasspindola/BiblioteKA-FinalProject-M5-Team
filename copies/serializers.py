@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Copie, Loan
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from books.serializers import BookSerializer
 
 
@@ -16,7 +16,7 @@ class CopieSerializer(serializers.ModelSerializer):
             "is_available",
             "copies_qnt",
         ]
-        read_only_fields = ["id", "book"]
+        read_only_fields = ["id", "book", "is_available"]
         depth = 1
 
 

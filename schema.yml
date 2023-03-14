@@ -1,0 +1,728 @@
+openapi: 3.0.3
+info:
+  title: BiblioteKA
+  version: 1.0.0
+  description: API for users to borrow books from a library.
+paths:
+  /api/books/:
+    get:
+      operationId: api_books_list
+      description: Route to list all books.
+      summary: List books
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: perPage
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: title
+        schema:
+          type: string
+      tags:
+      - Books
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookList'
+          description: ''
+    post:
+      operationId: api_books_create
+      description: Route to register books. Admins only.
+      summary: Register books 🔏
+      tags:
+      - Books
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Book'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Book'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+          description: ''
+  /api/books/{book_id}/:
+    get:
+      operationId: api_books_retrieve
+      description: Route to return data from a single book.
+      summary: Retrieve data from a book
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Books
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+          description: ''
+    delete:
+      operationId: api_books_destroy
+      description: Route to remove a book. Administrators only.
+      summary: Book delete 🔏
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Books
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/books/{book_id}/follow/:
+    post:
+      operationId: api_books_follow_create
+      description: Route to follow a book. Must be logged in.
+      summary: Follow a book 🔒
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Follow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Follow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Follow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Follow'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Follow'
+          description: ''
+  /api/books/{book_id}/loans/:
+    post:
+      operationId: api_books_loans_create
+      description: Route to create a loan of a book. Admins only.
+      summary: Loan creation 🔏
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Loans
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Loan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Loan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Loan'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+          description: ''
+  /api/books/{book_id}/loans/devolution/:
+    put:
+      operationId: api_books_loans_devolution_update
+      description: Route to return a book. Admins only.
+      summary: Loan devolution 🔏
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Loans
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Loan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Loan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Loan'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+          description: ''
+  /api/books/{book_id}/unfollow/:
+    delete:
+      operationId: api_books_unfollow_destroy
+      description: Route to unfollow a book. Must be logged in.
+      summary: Unfollow a book 🔒
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Follow
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/copies/{book_id}/:
+    post:
+      operationId: api_copies_create
+      description: Route to add multiple copies to a book. Admins only.
+      summary: Copies create 🔏
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Copies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Copie'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Copie'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Copie'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+              examples:
+                Example1:
+                  value:
+                    detail: 1 copies of 'Livro1' has been added.
+                  summary: Example 1
+          description: Created
+  /api/users/:
+    post:
+      operationId: api_users_create
+      description: Route for creating users and defining their permission level.
+      summary: User create
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/users/{user_id}/:
+    get:
+      operationId: api_users_retrieve
+      description: Route to return data from a single user. Must be admin or owner
+        to be able to do the search.
+      summary: Retrieve data from a user 🔐
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: api_users_partial_update
+      description: Route to update a user's data. Must be admin or the owner to be
+        able to do the request.
+      summary: User data update 🔐
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: api_users_destroy
+      description: Route to delete a user's data. Must be admin or the owner to be
+        able to do the request.
+      summary: User data delete 🔐
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/{user_id}/loans/:
+    get:
+      operationId: api_users_loans_list
+      description: Route for listing a user's loans. Must be admin or owner to be
+        able to do the search.
+      summary: Loan history 🔐
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: perPage
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Loans
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLoanList'
+          description: ''
+  /api/users/login/:
+    post:
+      operationId: api_users_login_create
+      description: Route to login of users. Must be registered to get the expected
+        return.
+      summary: User login
+      tags:
+      - Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomJWT'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomJWT'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomJWT'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        author:
+          type: string
+          maxLength: 255
+        copies_qnt:
+          type: integer
+          minimum: 1
+          writeOnly: true
+        is_available:
+          type: boolean
+          readOnly: true
+        will_be_available_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+      required:
+      - author
+      - copies_qnt
+      - id
+      - is_available
+      - title
+      - will_be_available_date
+    Copie:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        book:
+          allOf:
+          - $ref: '#/components/schemas/Book'
+          readOnly: true
+        is_available:
+          type: boolean
+          readOnly: true
+        copies_qnt:
+          type: integer
+          minimum: 1
+          writeOnly: true
+      required:
+      - book
+      - copies_qnt
+      - id
+      - is_available
+    CustomJWT:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    Follow:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        book:
+          allOf:
+          - $ref: '#/components/schemas/Book'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - book
+      - created_at
+      - id
+    FollowBooks:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        author:
+          type: string
+          maxLength: 255
+        is_available:
+          type: boolean
+        will_be_available_date:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - author
+      - id
+      - title
+    Loan:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          writeOnly: true
+        loan_date:
+          type: string
+          format: date-time
+          readOnly: true
+        expected_return_date:
+          type: string
+          format: date
+          readOnly: true
+        delivery_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        copie:
+          allOf:
+          - $ref: '#/components/schemas/Copie'
+          readOnly: true
+      required:
+      - copie
+      - delivery_date
+      - email
+      - expected_return_date
+      - id
+      - loan_date
+    PaginatedBookList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+    PaginatedLoanList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Loan'
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+        is_employee:
+          type: boolean
+          nullable: true
+          default: false
+        is_blocked_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        following_books:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowBooks'
+          readOnly: true
+    TokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - password
+      - refresh
+      - username
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+        is_employee:
+          type: boolean
+          nullable: true
+          default: false
+        is_blocked_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        following_books:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowBooks'
+          readOnly: true
+      required:
+      - email
+      - following_books
+      - id
+      - is_blocked_date
+      - password
+      - username
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

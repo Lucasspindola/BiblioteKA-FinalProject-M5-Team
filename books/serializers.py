@@ -18,7 +18,7 @@ class BookSerializer(serializers.ModelSerializer):
             "is_available",
             "will_be_available_date",
         ]
-        read_only_fields = ["will_be_available_date"]
+        read_only_fields = ["will_be_available_date", "is_available"]
 
     def create(self, validated_data: dict):
         copies_qnt = validated_data.pop("copies_qnt")
