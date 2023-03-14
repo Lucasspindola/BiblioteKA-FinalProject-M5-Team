@@ -2,7 +2,6 @@ from django.shortcuts import get_object_or_404
 from books.models import Book
 from rest_framework.views import Request, Response, status
 from .models import Copie, Loan
-from books.serializers import BookSerializer
 from django.http import Http404
 from datetime import date
 from .exceptions import CustomDoesNotExists
@@ -16,14 +15,11 @@ class CreateCopieMixin:
         copies_qnt = request.data.pop("copies_qnt")
         copies_objects = [Copie(book=book_obj) for _ in range(copies_qnt)]
         Copie.objects.bulk_create(copies_objects)
-        book_serializer = BookSerializer(book_obj)
-        data = {
-            "book": book_serializer.data,
-            "copies_created": copies_qnt,
-            "copies_total": Copie.objects.filter(book=book_obj).count(),
-        }
 
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": f"{copies_qnt} copies of '{book_obj.title}' has been added."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CreateLoanMixin:
@@ -47,7 +43,7 @@ class CreateLoanMixin:
         serializer.is_valid(raise_exception=True)
         email = self.request.data.pop("email", None)
         try:
-            book_obj = get_object_or_404(self.book_queryset, pk=kwargs["pk"])
+            book_obj = get_object_or_404(self.book_queryset, pk=kwargs["book_id"])
         except Http404:
             return Response(
                 {"detail": f"{self.book_queryset.model.__name__} not found."},
@@ -103,10 +99,17 @@ class UpdateLoanMixin:
     book_queryset = None
     user_queryset = None
 
-    def patch(self, request, *args, **kwargs):
+    def check(self, request):
         self.check_object_permissions(request, request.user)
         serializer_body_check = self.get_serializer(data=request.data)
         serializer_body_check.is_valid(raise_exception=True)
+
+    def put(self, request, *args, **kwargs):
+        self.check(request)
+        return super().patch(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        self.check(request)
         return super().patch(request, *args, **kwargs)
 
     def get_object(self):

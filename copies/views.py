@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from books.pagination import CustomBookPagination
 from django_filters import rest_framework as filters
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 # Create your views here.
 
@@ -22,6 +23,28 @@ class CopieView(CreateCopieMixin, generics.CreateAPIView):
     permission_classes = [CustomBookPermission]
 
     serializer_class = CopieSerializer
+    lookup_url_kwarg = "book_id"
+
+    @extend_schema(
+        operation_id="api_copies_create",  # (1) # (2)
+        description="Route to add multiple copies to a book. Admins only.",
+        summary="Copies create 🔏",
+        tags=["Copies"],
+        responses={
+            201: OpenApiResponse(
+                response="1 copies added to Livro1",
+                description="Created",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        value={"detail": "1 copies of 'Livro1' has been added."},
+                    )
+                ],
+            ),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 class LoansView(CreateLoanMixin, generics.CreateAPIView):
@@ -34,6 +57,16 @@ class LoansView(CreateLoanMixin, generics.CreateAPIView):
     book_queryset = Book.objects.all()
 
     pagination_class = CustomBookPagination
+    lookup_url_kwarg = "book_id"
+
+    @extend_schema(
+        operation_id="api_books_loans_create",  # (1) # (2)
+        description="Route to create a loan of a book. Admins only.",
+        summary="Loan creation 🔏",
+        tags=["Loans"],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 class LoanHistoryView(generics.ListAPIView):
@@ -44,6 +77,16 @@ class LoanHistoryView(generics.ListAPIView):
     queryset = Loan.objects.all()
 
     pagination_class = CustomBookPagination
+    lookup_url_kwarg = "user_id"
+
+    @extend_schema(
+        operation_id="api_users_loans_list",  # (1) # (2)
+        description="Route for listing a user's loans. Must be admin or owner to be able to do the search.",
+        summary="Loan history 🔐",
+        tags=["Loans"],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def list(self, request: Request, *args, **kwargs):
         user_obj = get_object_or_404(User, pk=kwargs["user_id"])
@@ -58,7 +101,7 @@ class LoanHistoryView(generics.ListAPIView):
         return Response(serializer.data)
 
 
-class LoanDetailView(UpdateLoanMixin, generics.RetrieveUpdateAPIView):
+class LoanDetailView(UpdateLoanMixin, generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomLoanPermission, IsAuthenticated]
 
@@ -66,3 +109,24 @@ class LoanDetailView(UpdateLoanMixin, generics.RetrieveUpdateAPIView):
     queryset = Loan.objects.all()
     book_queryset = Book.objects.all()
     user_queryset = User.objects.all()
+
+    lookup_url_kwarg = "book_id"
+
+    @extend_schema(
+        operation_id="api_books_loans_devolution_partial_update",  # (1) # (2)
+        description="Route to return a book. Admins only.",
+        summary="Loan devolution 🔏",
+        tags=["Loans"],
+        exclude=True,
+    )
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+
+    @extend_schema(
+        operation_id="api_books_loans_devolution_update",  # (1) # (2)
+        description="Route to return a book. Admins only.",
+        summary="Loan devolution 🔏",
+        tags=["Loans"],
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
