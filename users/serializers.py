@@ -40,7 +40,12 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
     email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())],
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user with that email already exists.",
+            )
+        ],
     )
     is_employee = serializers.BooleanField(allow_null=True, default=False)
 

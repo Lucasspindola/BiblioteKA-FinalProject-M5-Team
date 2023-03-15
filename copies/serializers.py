@@ -56,8 +56,7 @@ class LoanSerializer(serializers.ModelSerializer):
         instance.copie.book.save()
         instance.save()
 
-        # date_test = date.today() + timedelta(days=999) # Descomentar para testar bloqueio
-        # if instance.expected_return_date < date.today() + date_test :  # Descomentar para testar bloqueio
+        # if instance.expected_return_date < date.today() + timedelta(days=999):  # Descomentar para testar bloqueio
         if instance.expected_return_date < date.today():
             instance.user.is_blocked_date = date.today() + timedelta(days=7)
             instance.user.save()
